@@ -25,17 +25,19 @@ echo.
 echo Which action would you like to perform?
 echo.
 echo 1. Flash Marauder
-echo 2. Update Marauder (v0.10.2 included)
-echo 3. Save Flipper Blackmagic WiFi settings
-echo 4. Flash Flipper Blackmagic
+echo 3. Flash SD Serial Marauder
+echo 4. Update Marauder (v0.10.2 included)
+echo 5. Save Flipper Blackmagic WiFi settings
+echo 6. Flash Flipper Blackmagic
 echo.
 set choice_fw=
 set /p choice_fw= Type choice and hit enter: 
 if '%choice_fw%'=='1' GOTO MARAUDER
-if '%choice_fw%'=='2' GOTO UPDATE
-if '%choice_fw%'=='3' GOTO BACKUP
-if '%choice_fw%'=='4' GOTO FLIPPERBM
-echo Please choose 1, or 2!
+if '%choice_fw%'=='3' GOTO MARAUDER_SD
+if '%choice_fw%'=='4' GOTO UPDATE
+if '%choice_fw%'=='5' GOTO BACKUP
+if '%choice_fw%'=='6' GOTO FLIPPERBM
+echo Please choose 1, 2 or 3!
 ping 127.0.0.1 -n 5
 cls
 GOTO CHOOSE_FW
@@ -51,6 +53,24 @@ echo #########################################
 echo. 
 set last_firmware=
 for /f "tokens=1" %%F in ('dir Marauder\esp32_marauder*flipper.bin /b /o-n') do set last_firmware=%%F
+IF [!last_firmware!]==[] echo Please get and copy the last firmware from ESP32Marauder's Github Releases & GOTO ERREXIT
+esptool.exe -p !_com! -b %BR% -c esp32s2 --before default_reset -a no_reset erase_region 0x9000 0x6000
+echo Firmware Erased, preparing write...
+ping 127.0.0.1 -n 5 > NUL
+esptool.exe -p !_com! -b %BR% -c esp32s2 --before default_reset -a no_reset write_flash --flash_mode dio --flash_freq 80m --flash_size 4MB 0x1000 Marauder\bootloader.bin 0x8000 Marauder\partitions.bin 0x10000 Marauder\!last_firmware!
+GOTO DONE
+
+:MARAUDER_SD
+cls
+echo.
+echo #########################################
+echo #    Marauder Flasher Script v2.10      #
+echo #    By Frog, tweaked by UberGuidoZ     #
+echo #      and by ImprovingRigmarole        #
+echo #########################################
+echo. 
+set last_firmware=
+for /f "tokens=1" %%F in ('dir Marauder\esp32_marauder*flipper_sd_serial.bin /b /o-n') do set last_firmware=%%F
 IF [!last_firmware!]==[] echo Please get and copy the last firmware from ESP32Marauder's Github Releases & GOTO ERREXIT
 esptool.exe -p !_com! -b %BR% -c esp32s2 --before default_reset -a no_reset erase_region 0x9000 0x6000
 echo Firmware Erased, preparing write...
